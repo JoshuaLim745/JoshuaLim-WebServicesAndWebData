@@ -1,0 +1,3 @@
+"""
+Holds the database model
+"""
