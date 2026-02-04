@@ -1,0 +1,6 @@
+pip install "fastapi[standard]"
+pip install sqlalchemy psycopg2-binary
+
+Install PostgreSQL - The program is called Pgadmin 4
+
+fastapi dev main.py
