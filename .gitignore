@@ -1,0 +1,10 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Environment files (Security: prevents uploading your DB password)
+.env
+
+# Virtual environments
+venv/
+.venv/
