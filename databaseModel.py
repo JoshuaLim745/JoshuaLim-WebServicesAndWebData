@@ -19,16 +19,16 @@ class Base(DeclarativeBase):
 book_genre_link = Table(
     "book_genre_link",
     Base.metadata,
-    Column("book_id", ForeignKey("books.id"), primary_key=True),
-    Column("genre_id", ForeignKey("genres.id"), primary_key=True),
+    Column("book_id", ForeignKey("books.id", ondelete="CASCADE"), primary_key=True),
+    Column("genre_id", ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True),
 )
 
 # Link between Users and their Favorite Genres
 user_genre_link = Table(
     "user_genre_link",
     Base.metadata,
-    Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("genre_id", ForeignKey("genres.id"), primary_key=True),
+    Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("genre_id", ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True),
 )
 
 # 3. THE CORE TABLES
@@ -43,8 +43,16 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(100), unique=True)
     password: Mapped[str] = mapped_column(String(100))
     
-    # Relationship: User <-> Favorite Genres
-    fav_genres: Mapped[list["Genre"]] = relationship(secondary=user_genre_link)
+    #Add cascade to the many-to-many relationship
+    fav_genres: Mapped[list["Genre"]] = relationship(
+        secondary=user_genre_link,
+        cascade="all, delete" 
+    )
+
+    #Explicitly define the relationship to ratings so they can be deleted
+    ratings: Mapped[list["UserRatesBook"]] = relationship(
+        cascade="all, delete-orphan"
+    )
 
 class Book(Base):
     __tablename__ = "books"
@@ -58,6 +66,6 @@ class Book(Base):
 
 class UserRatesBook(Base):
     __tablename__ = "user_rates_books"
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     book_id: Mapped[int] = mapped_column(ForeignKey("books.id"), primary_key=True)
     user_rating: Mapped[float] = mapped_column(Float)
