@@ -1,11 +1,15 @@
 pip install "fastapi[standard]"
 pip install sqlalchemy psycopg2-binary
+pip install "passlib[bcrypt]"
+pip install pytest
 
 Install PostgreSQL - The program is called Pgadmin 4
 
 fastapi dev main.py
 
 alembic revision --autogenerate -m "Message here"
+
+
 
 If I need to undo a change on DB
 alembic downgrade -1

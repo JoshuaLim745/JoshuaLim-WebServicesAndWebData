@@ -11,6 +11,14 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship,
 DATABASE_URL = "postgresql+psycopg2://postgres:password@localhost:5432/WebServicesDB"
 engine = create_engine(DATABASE_URL)
 
+def get_db():
+    session = Session(engine)
+    try:
+        yield session
+    finally:
+        session.close()
+
+
 class Base(DeclarativeBase):
     pass
 
