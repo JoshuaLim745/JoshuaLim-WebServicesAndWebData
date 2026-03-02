@@ -190,7 +190,7 @@ def get_suggestions(user_in: UserAuth, db: Session = Depends(get_db)):
 
 # AI generated description
 
-client = genai.Client(api_key="AIzaSyBtu5jgqpWT2NjSQd5a4_YcR5SKQOV_TeU")
+client = genai.Client(api_key="")
 
 def generate_ai_description(book_title: str, author: str) -> str:
     """Helper function to call Gemini 3 Flash."""
