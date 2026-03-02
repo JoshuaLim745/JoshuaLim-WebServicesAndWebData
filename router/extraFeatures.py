@@ -6,6 +6,7 @@ from typing import List, Optional
 from databaseModel import Book, Genre, User, UserRatesBook, book_genre_link, user_genre_link, get_db
 from passlib.context import CryptContext
 import bcrypt
+from google import genai
 
 class UserAuth(BaseModel):
     email: EmailStr
@@ -185,3 +186,59 @@ def get_suggestions(user_in: UserAuth, db: Session = Depends(get_db)):
             "genres": [g.name for g in b.genres]
         } for b in suggestions
     ]
+
+
+# AI generated description
+
+client = genai.Client(api_key="AIzaSyBtu5jgqpWT2NjSQd5a4_YcR5SKQOV_TeU")
+
+def generate_ai_description(book_title: str, author: str) -> str:
+    """Helper function to call Gemini 3 Flash."""
+    try:
+
+        prompt = f"Write a compelling, concise 3-sentence book description for '{book_title}' by {author}."
+        
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview", 
+            contents=prompt
+        )
+        return response.text
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gemini API Error: {str(e)}")
+
+
+
+@router.get("/ai-description", summary="Generate AI description for a book")
+def get_book_description_ai(book_id: int, db: Session = Depends(get_db)):
+    """
+    ### AI Book Description Generator
+    Uses the **Gemini 3 Flash** model to generate a custom description based on the book's title.
+
+    * **Step 1**: Looks up the `book_id` in the database to retrieve the `title` and `author`.
+    * **Step 2**: Passes that data to the Gemini API.
+    * **Step 3**: Returns the natively generated text.
+    """
+    # 1. Find the book in the database
+    book = db.get(Book, book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found in database")
+
+    # 2. Generate the description using Gemini
+    ai_text = generate_ai_description(book.title, book.author)
+
+    # 3. Return the response in camelCase
+    return {
+        "bookId": book.id,
+        "bookTitle": book.title,
+        "aiGeneratedDescription": ai_text
+    }
+
+
+
+
+
+
+
+
+
+

@@ -1,28 +1,24 @@
 import pytest
-from seedingData import seed_test_database # Import your helper
-from fastapi.testclient import TestClient
-from sqlalchemy import create_url, create_engine
-from sqlalchemy.orm import sessionmaker
-from databaseModel import Base, get_db
-from main import app # Assuming your FastAPI app is here
+from databaseModel import Genre, Book
 
-# Use an in-memory SQLite DB for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-@pytest.fixture
-def db():
-    # Setup: Create tables in SQLite
-    Base.metadata.create_all(bind=engine)
-    session = TestingSessionLocal()
+def test_genre_trends(client, db_session):
+    # Manually seed a genre and book for testing trends
+    genre = Genre(name="Sci-Fi")
+    db_session.add(genre)
+    db_session.commit()
     
-    # NEW: Inject the CSV data into the temp database
-    seed_test_database(session)
-    
-    try:
-        yield session # This is where the test happens
-    finally:
-        session.close()
-        Base.metadata.drop_all(bind=engine) # Cleanup
+    # Check trends endpoint
+    response = client.get("/Extra Features/trends/book")
+    assert response.status_code == 200
+    # Even if empty, it should return a dict
+    assert isinstance(response.json(), dict)
+
+def test_suggestions_unauthorized(client):
+    # Test that suggestions fail without valid credentials
+    response = client.post("/Extra Features/suggestions", json={"email": "ghost@test.com", "password": "nop"})
+    assert response.status_code == 401
+
+
+
+
+

@@ -2,6 +2,8 @@ pip install "fastapi[standard]"
 pip install sqlalchemy psycopg2-binary
 pip install "passlib[bcrypt]"
 pip install pytest
+pip install kagglehub[pandas-datasets]
+pip install -q -U google-genai
 
 Install PostgreSQL - The program is called Pgadmin 4
 
