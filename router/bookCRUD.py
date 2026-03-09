@@ -6,7 +6,9 @@ from typing import List, Optional
 from databaseModel import Book, Genre, User, UserRatesBook, book_genre_link, user_genre_link, get_db
 from passlib.context import CryptContext
 import bcrypt
-router = APIRouter(prefix="/books", tags=["Book CRUD & rating"])
+from auth import get_current_user
+
+router = APIRouter(prefix="/books")
 
 
 
@@ -21,8 +23,6 @@ class BookCreate(BookSchema):
     genre_ids: List[int] = Field(default=[], alias="genreIds")
 
 class BookRating(BaseModel):
-    email: EmailStr
-    password: str
     bookId: int = Field(..., alias="bookId")
     rating: float = Field(..., ge=1.0, le=5.0)
 
@@ -60,7 +60,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 
-@router.post("/", response_model=None, summary="Create a new book")
+@router.post("/", summary="Create a new book", operation_id="createBook", tags=["Book Management"])
 def create_book(book_in: BookCreate, db: Session = Depends(get_db)):
 
     """
@@ -110,7 +110,7 @@ def create_book(book_in: BookCreate, db: Session = Depends(get_db)):
 
 
 
-@router.get("/{book_id}", summary="Get book details")
+@router.get("/{book_id}", summary="Get book details", operation_id="getBookDetails", tags=["Book Management"])
 def read_book(book_id: int, db: Session = Depends(get_db)):
     """
     ### Read Book Details
@@ -143,7 +143,7 @@ def read_book(book_id: int, db: Session = Depends(get_db)):
 
 
 
-@router.put("/{book_id}", summary="Update book information")
+@router.put("/{book_id}", summary="Update book", operation_id="updateBook", tags=["Book Management"])
 def update_book_partial(book_id: int, field_name: str, new_value: str, db: Session = Depends(get_db)):
     """
     ### Dynamic Book Update
@@ -151,8 +151,8 @@ def update_book_partial(book_id: int, field_name: str, new_value: str, db: Sessi
 
     * **Input**:
         * `Book ID`: The integer ID of the book in the database.
-        * `Field name`: The column to change (e.g., 'title', 'author', or 'avg_rating').
-        * `New value`: The new data to insert.
+        * `Field name`: The column to change ('title', 'author', 'avg_rating', or 'genres').
+        * `New value`: The new data to insert. (For genres, this should be a comma-separated string of genre IDs).
     * **Logic**: Uses Python's `setattr` to dynamically map the input string to the database column.
     * **Output**: Success message confirming which field was changed.
     """
@@ -161,19 +161,40 @@ def update_book_partial(book_id: int, field_name: str, new_value: str, db: Sessi
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
+    # 1. Handle Many-to-Many Genre Updates
+    if field_name == "genres":
+        try:
+            # Split string into integer IDs
+            genre_ids = [int(gid.strip()) for gid in new_value.split(",") if gid.strip()]
+            
+            # Fetch genre objects from the database
+            new_genres = db.query(Genre).filter(Genre.id.in_(genre_ids)).all()
+            
+            if len(new_genres) != len(genre_ids):
+                raise HTTPException(status_code=400, detail="One or more Genre IDs do not exist.")
+
+            # Replace the entire list of genres for this book
+            book.genres = new_genres
+            db.commit()
+            return {"message": "Genres updated successfully", "total_genres": len(book.genres)}
+            
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid format for genres. Use comma-separated IDs.")
+
+    # 2. Handle Standard Fields (Title, Author, Rating)
     allowed_fields = ["title", "author", "avg_rating"]
     if field_name not in allowed_fields:
-        raise HTTPException(status_code=400, detail="Invalid field.")
+        raise HTTPException(status_code=400, detail="Invalid field. Use 'title', 'author', 'avg_rating', or 'genres'.")
 
     try:
-        # Improved dynamic conversion
+        # Improved dynamic conversion for basic types
         target_type = type(getattr(book, field_name))
         setattr(book, field_name, target_type(new_value))
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid data type for field")
 
     db.commit()
-    return {"message": "Update successful"}
+    return {"message": f"Field '{field_name}' updated successful"}
 
 
 
@@ -184,7 +205,7 @@ def update_book_partial(book_id: int, field_name: str, new_value: str, db: Sessi
 
 
 
-@router.delete("/{book_id}", summary="Remove a book")
+@router.delete("/{book_id}", summary="Remove a book", operation_id="deleteBook", tags=["Book Management"])
 def delete_book(book_id: int, db: Session = Depends(get_db)):
     """
     ### Delete Book Record
@@ -213,16 +234,14 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
 
 
 
-@router.post("/rate", summary="Rate a book")
-def rate_book(data: BookRating, db: Session = Depends(get_db)):
+@router.post("/ratings/rate", summary="Rate a book", operation_id="rateBook", tags=["Book Management"])
+def rate_book(data: BookRating, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 
     """ 
     ### Book Rating System
     Allows an authenticated user to assign a star rating to a specific book. This endpoint uses **Upsert** logic, meaning it handles both new ratings and updates to existing ones.
     
     * **Input**:
-        * `Email`: User email
-        * `Password`: User password
         * `Book ID`: The integer ID of the book in the database.
         * `Rating`: The score that a user wants to provide a book with
     * **Output**: A list of up to 3 book objects.
@@ -231,31 +250,19 @@ def rate_book(data: BookRating, db: Session = Depends(get_db)):
     * **Error State**: Returns a `404` if the book is not found in the database
     """
 
-    # 1. FIXED AUTH: Query email then verify hash
-
     if not (1.0 <= data.rating <= 5.0):
-        raise HTTPException(status_code=400, detail="Rating must be a number between 1.0 and 5.0")
-
-    user = db.query(User).filter_by(email=data.email).first()
-    if not user or not verify_password(data.password, user.password):
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=400, detail="Rating must be 1.0-5.0")
 
     book = db.get(Book, data.bookId)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
-    # 2. Logic for Upserting Rating
-    rating_entry = db.query(UserRatesBook).filter_by(user_id=user.id, book_id=data.bookId).first()
+    # Use current_user.id directly
+    rating_entry = db.query(UserRatesBook).filter_by(user_id=current_user.id, book_id=data.bookId).first()
     if rating_entry:
         rating_entry.user_rating = data.rating
     else:
-        db.add(UserRatesBook(user_id=user.id, book_id=data.bookId, user_rating=data.rating))
-    
-    db.flush() 
-
-    # 3. Recalculate Average
-    new_avg = db.query(func.avg(UserRatesBook.user_rating)).filter(UserRatesBook.book_id == data.bookId).scalar()
-    book.avg_rating = round(float(new_avg), 2)
+        db.add(UserRatesBook(user_id=current_user.id, book_id=data.bookId, user_rating=data.rating))
     
     db.commit()
-    return {"newBookAverage": book.avg_rating}
+    return {"message": "Rating updated"}

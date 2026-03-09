@@ -23,27 +23,18 @@ def get_or_create_genre(session, name):
         session.flush() # Flush to get the ID without committing yet
     return genre
 
-def run_migration():
-    # 1. Load the CSV
+def run_migration(target_engine=None):
+    from databaseModel import engine as default_engine
+    # Use the test engine if provided, otherwise use the real one
+    active_engine = target_engine if target_engine else default_engine
+    
     try:
         df = pd.read_csv('filtered_google_books.csv')
     except FileNotFoundError:
-        print("Error: 'filtered_google_books.csv' not found.")
         return
-    
-    all_genres = df['genre'].str.replace('&amp,', '&').str.split(',').explode().str.strip().unique()
 
-    # 2. Inject Data
-    with Session(engine) as session:
-        for g_name in all_genres:
-            if g_name and g_name.lower() != 'none':
-                # Use the same 'check if exists' logic
-                if not session.query(Genre).filter_by(name=g_name).first():
-                    session.add(Genre(name=g_name))
-    
-        session.commit()
-
-    with Session(engine) as session:
+    # Use Session(active_engine) instead of Session(engine)
+    with Session(active_engine) as session:
         print("Starting data seeding...")
         
         for _, row in df.iterrows():

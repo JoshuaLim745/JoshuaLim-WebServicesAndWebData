@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, select
+from sqlalchemy import func, select, desc
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 from databaseModel import Book, Genre, User, UserRatesBook, book_genre_link, user_genre_link, get_db
 from passlib.context import CryptContext
 import bcrypt
 from google import genai
+from auth import get_current_user
 
-class UserAuth(BaseModel):
-    email: EmailStr
-    password: str
 
 class BookSuggestionResponse(BaseModel):
     id: int
@@ -46,7 +44,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
-router = APIRouter(prefix="/Extra Features", tags=["Extra Features"])
+router = APIRouter(prefix="/Extra-Features")
 
 
 
@@ -58,7 +56,7 @@ router = APIRouter(prefix="/Extra Features", tags=["Extra Features"])
 
 
 
-@router.get("/trends/{target}", tags=["Analysis"], summary="Get Genre Popularity")
+@router.get("/trends/{target}", summary="Get Genre Trends", operation_id="getGenreTrends", tags=["Analysis & AI Tools"])
 def get_trends(target: str, db: Session = Depends(get_db)):
 
     """
@@ -77,20 +75,22 @@ def get_trends(target: str, db: Session = Depends(get_db)):
     
     if target_type == "book":
         # Popularity by number of books in a genre
+        book_count_func = func.count(book_genre_link.c.book_id)
         results = (
-            db.query(Genre.name, func.count(book_genre_link.c.book_id).label("total"))
+            db.query(Genre.name, book_count_func.label("total"))
             .join(book_genre_link)
             .group_by(Genre.name)
-            .order_by(func.desc("total"))
+            .order_by(desc(book_count_func)) # Correct: desc() on the function object
             .all()
         )
     elif target_type == "user":
         # Popularity by number of users who favorited a genre
+        user_count_func = func.count(user_genre_link.c.user_id)
         results = (
-            db.query(Genre.name, func.count(user_genre_link.c.user_id).label("total"))
+            db.query(Genre.name, user_count_func.label("total"))
             .join(user_genre_link)
             .group_by(Genre.name)
-            .order_by(func.desc("total"))
+            .order_by(desc(user_count_func)) # Correct: desc() on the function object
             .all()
         )
     else:
@@ -112,9 +112,8 @@ def get_trends(target: str, db: Session = Depends(get_db)):
 
 
 
-
-@router.post("/suggestions", tags=["Discovery"], response_model=List[BookSuggestionResponse], summary="Get book recommendations")
-def get_suggestions(user_in: UserAuth, db: Session = Depends(get_db)):
+@router.post("/suggestions", summary="Get book recommendations", response_model=List[BookSuggestionResponse], operation_id="getBookSuggestions", tags=["Analysis & AI Tools"])
+def get_suggestions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     ### Personalized Recommendations Engine
     Generates a curated list of books based on a user's specific reading tastes.
@@ -126,33 +125,23 @@ def get_suggestions(user_in: UserAuth, db: Session = Depends(get_db)):
     * **Empty State**: Returns an empty list `[]` if the user's top genre is fully explored.
     * **Error State**: Returns a `404` if the user has no rating history.
     """
-    # 1. Authenticate
-    user = db.query(User).filter_by(email=user_in.email).first()
-    if not user or not verify_password(user_in.password, user.password):
-        raise HTTPException(status_code=401, detail="Incorrect credentials")
+    # 1. Get genre IDs from current_user's favorites
+    fav_genre_ids = [g.id for g in current_user.fav_genres]
 
-    # 2. Collect Genre IDs from two sources:
-    
-    # Source A: Explicitly favorited genres
-    fav_genres_stmt = select(user_genre_link.c.genre_id).where(user_genre_link.c.user_id == user.id)
-    fav_genre_ids = db.scalars(fav_genres_stmt).all()
-
-    # Source B: Highly rated genres (User gave 4+ stars)
-    rated_genres_stmt = (
+    # 2. Get genre IDs from current_user's high ratings (4+ stars)
+    rated_genre_ids = db.scalars(
         select(book_genre_link.c.genre_id)
         .join(UserRatesBook, UserRatesBook.book_id == book_genre_link.c.book_id)
-        .filter(UserRatesBook.user_id == user.id, UserRatesBook.user_rating >= 4.0)
-    )
-    rated_genre_ids = db.scalars(rated_genres_stmt).all()
+        .filter(UserRatesBook.user_id == current_user.id, UserRatesBook.user_rating >= 4.0)
+    ).all()
 
-    # Combine and unique-ify the list
     all_target_genre_ids = list(set(fav_genre_ids) | set(rated_genre_ids))
 
     if not all_target_genre_ids:
         raise HTTPException(status_code=404, detail="No favorites or high ratings found to generate suggestions.")
 
     # 3. Find books that have ANY of these genres and haven't been rated yet
-    rated_books = select(UserRatesBook.book_id).where(UserRatesBook.user_id == user.id)
+    rated_books = select(UserRatesBook.book_id).where(UserRatesBook.user_id == current_user.id)
     
     subquery = (
         select(Book)
@@ -188,6 +177,18 @@ def get_suggestions(user_in: UserAuth, db: Session = Depends(get_db)):
     ]
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 # AI generated description
 
 client = genai.Client(api_key="")
@@ -208,7 +209,7 @@ def generate_ai_description(book_title: str, author: str) -> str:
 
 
 
-@router.get("/ai-description", summary="Generate AI description for a book")
+@router.get("/ai-description", summary="Generate AI description", operation_id="generateBookDescriptionAI", tags=["Analysis & AI Tools"])
 def get_book_description_ai(book_id: int, db: Session = Depends(get_db)):
     """
     ### AI Book Description Generator
