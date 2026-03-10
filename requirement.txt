@@ -7,26 +7,3 @@ pip install -q -U google-genai
 pip install fastapi "uvicorn[standard]" mcp
 pip install fastapi-mcp
 pip install "python-jose[cryptography]" python-multipart
-
-Install PostgreSQL - The program is called Pgadmin 4
-
-Running main program
-fastapi dev main.py
-uvicorn main:app --reload
-python .\main.py
-
-Running test cases
-python -m pytest -s  
-
-
-
-
-alembic revision --autogenerate -m "Message here"
-
-
-
-If I need to undo a change on DB
-alembic downgrade -1
-
-If changes are confirmed then 
-alembic upgrade head
