@@ -1,9 +1,0 @@
-pip install "fastapi[standard]"
-pip install sqlalchemy psycopg2-binary
-pip install "passlib[bcrypt]"
-pip install pytest pytest-asyncio httpx
-pip install kagglehub[pandas-datasets]
-pip install -q -U google-genai
-pip install fastapi "uvicorn[standard]" mcp
-pip install fastapi-mcp
-pip install "python-jose[cryptography]" python-multipart

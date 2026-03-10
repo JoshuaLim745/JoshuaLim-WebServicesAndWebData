@@ -1,0 +1,25 @@
+[project]
+name = "mcp-server-fastapi"
+version = "0.1.0"
+description = "Professional MCP Server with FastAPI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard]",
+    "mcp",
+    "fastapi-mcp",
+    "sqlalchemy",
+    "psycopg2-binary",
+    "passlib[bcrypt]",
+    "python-jose[cryptography]",
+    "python-multipart",
+    "google-genai",
+    "kagglehub[pandas-datasets]",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+]
