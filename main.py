@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi_mcp import FastApiMCP
 from router import userCRUD, bookCRUD, extraFeatures
+import os
 
 app = FastAPI(title="Book Engine API")
 
@@ -25,7 +26,8 @@ mcp = FastApiMCP(
 )
 
 mcp.mount_http()
+PORT = os.environ.get("PORT", 8000)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
