@@ -5,7 +5,9 @@ Paragraph 1: Ideas / Aim / Intention
 
 Paragraph 2: Functionality (Explain in a list all functions (1 to 3 sentence per is more then enough))
 
-2. Setup Instruction
+2. The File Structure
+
+3. Setup Instruction
 How to use:
     1. 
     2. 

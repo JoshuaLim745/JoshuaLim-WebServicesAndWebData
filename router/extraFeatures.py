@@ -8,6 +8,8 @@ from passlib.context import CryptContext
 import bcrypt
 from google import genai
 from auth import get_current_user
+import os
+from dotenv import load_dotenv
 
 
 class BookSuggestionResponse(BaseModel):
@@ -191,10 +193,14 @@ def get_suggestions(db: Session = Depends(get_db), current_user: User = Depends(
 
 # AI generated description
 
-client = genai.Client(api_key="")
-
 def generate_ai_description(book_title: str, author: str) -> str:
     """Helper function to call Gemini 3 Flash."""
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+    client = genai.Client(api_key=api_key)
+    if not api_key:
+        raise HTTPException(status_code=400, detail="No API_KEY found in environment variables!")
+    
     try:
 
         prompt = f"Write a compelling, concise 3-sentence book description for '{book_title}' by {author}."
