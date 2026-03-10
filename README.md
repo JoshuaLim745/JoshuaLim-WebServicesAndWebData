@@ -14,6 +14,7 @@ How to use:
     3. To run the code enter fast
 
 NOTE from render: Your free instance will spin down with inactivity, which can delay requests by 50 seconds or more.
+NOTE from render: Your database will expire on April 9, 2026.
 
 # Extra information
 1. List of genres (Make a txt for this)

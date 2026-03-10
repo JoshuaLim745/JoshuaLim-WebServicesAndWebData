@@ -6,9 +6,16 @@ Holds the database model and create it
 import pandas as pd
 from sqlalchemy import create_engine, ForeignKey, String, Integer, Float, Table, Column
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
+import os
 
 # 1. Connection Setup
-DATABASE_URL = "postgresql+psycopg2://postgres:password@localhost:5432/WebServicesDB"
+# Use Internal URL on Render, fallback to local for development
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost/dbname")
+
+# For Render's PostgreSQL, you may need to handle the 'postgres://' vs 'postgresql://' prefix
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 engine = create_engine(DATABASE_URL)
 
 def get_db():
