@@ -22,12 +22,32 @@ app.include_router(userCRUD.router)
 app.include_router(bookCRUD.router)
 app.include_router(extraFeatures.router)
 
+# The Metadata content
+METADATA = {
+    "resource": "https://joshualim-webservicesandwebdata.onrender.com/mcp",
+    "authorization_servers": ["https://joshualim-webservicesandwebdata.onrender.com"],
+    "scopes_supported": ["mcp:tools"]
+}
+
+# Route 1: Root level discovery
 @app.get("/.well-known/oauth-protected-resource")
-async def get_oauth_metadata():
+async def get_root_metadata():
+    return METADATA
+
+# Route 2: Sub-path discovery (This is likely what the Inspector is looking for)
+@app.get("/.well-known/oauth-protected-resource/mcp")
+async def get_path_metadata():
+    return METADATA
+
+@app.get("/.well-known/oauth-authorization-server")
+async def get_auth_server_metadata():
     return {
-        "resource": "https://joshualim-webservicesandwebdata.onrender.com/mcp", 
-        "authorization_servers": ["https://joshualim-webservicesandwebdata.onrender.com"],
-        "scopes_supported": ["mcp:tools"]
+        "issuer": "https://joshualim-webservicesandwebdata.onrender.com",
+        "authorization_endpoint": "https://joshualim-webservicesandwebdata.onrender.com/users/login",
+        "token_endpoint": "https://joshualim-webservicesandwebdata.onrender.com/users/login",
+        "response_types_supported": ["token"],
+        "grant_types_supported": ["password"],
+        "token_endpoint_auth_methods_supported": ["client_secret_post"]
     }
 
 mcp = FastApiMCP(
