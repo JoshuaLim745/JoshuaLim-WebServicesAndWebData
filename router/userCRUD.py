@@ -52,10 +52,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
 
 
-
-
-
-
 @router.post("/create", summary="Create a new user", operation_id="createUser", tags=["User Management"])
 def create_user(user_in: UserAuth, db: Session = Depends(get_db)):
 

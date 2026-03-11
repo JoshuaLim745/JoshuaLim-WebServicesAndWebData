@@ -6,9 +6,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from databaseModel import User, get_db
+import os 
 
 # 1. Configuration Constants
-SECRET_KEY = "your-super-secret-key-here"  # In production, use an environment variable
+SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
