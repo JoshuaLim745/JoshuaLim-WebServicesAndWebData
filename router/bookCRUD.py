@@ -238,7 +238,7 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
 def rate_book(
     data: BookRating, 
     db: Session = Depends(get_db), 
-    token: Optional[str] = None, # Added for AI visibility
+    ai_token: Optional[str] = None, # Added for AI visibility
     current_user: User = Depends(get_current_user)
 ):
 

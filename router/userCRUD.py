@@ -86,7 +86,7 @@ def create_user(user_in: UserAuth, db: Session = Depends(get_db)):
 @router.post("/read", summary="View user profile", operation_id="getUserProfile", tags=["User Management"])
 def read_user_me(
     db: Session = Depends(get_db), 
-    token: Optional[str] = None,  # AI now sees this as a tool input
+    ai_token: Optional[str] = None,  # AI now sees this as a tool input
     current_user: User = Depends(get_current_user)
 ):
 
@@ -111,7 +111,7 @@ def read_user_me(
 def update_genres(
     data: GenreUpdate, 
     db: Session = Depends(get_db), 
-    token: Optional[str] = None, # Added for AI visibility
+    ai_token: Optional[str] = None, # Added for AI visibility
     current_user: User = Depends(get_current_user)
 ):
 
@@ -149,7 +149,7 @@ def update_genres(
 @router.delete("/delete", summary="Remove user account", operation_id="deleteUserAccount", tags=["User Management"])
 def delete_user(
     db: Session = Depends(get_db), 
-    token: Optional[str] = None, # Add this for AI visibility
+    ai_token: Optional[str] = None, # Add this for AI visibility
     current_user: User = Depends(get_current_user)
 ):
 
