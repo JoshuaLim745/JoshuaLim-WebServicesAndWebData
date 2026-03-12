@@ -25,7 +25,7 @@ class GenreUpdate(BaseModel):
     genreName: str
 
 class LoginRequest(BaseModel):
-    emai: str
+    email: str
     password: str
 
 @router.post("/login", operation_id="login", tags=["User Management"])
@@ -33,14 +33,15 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     """
     Standard OAuth2 login flow to get a JWT token.
     * **Input**:
-        * `username`: User email
+        * `email`: User email
         * `password`: User password
+
     * **Output**: Returns the user data upon success.
     * **Error**: Returns an appropriate message if the user provides incorrect credentials.
     
     
     """
-    user = db.query(User).filter_by(email=data.username).first()
+    user = db.query(User).filter_by(email=data.email).first()
     if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     

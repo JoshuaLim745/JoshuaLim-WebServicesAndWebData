@@ -89,7 +89,10 @@ You can run the API on your own machine for testing and debugging by executing t
 **Online Method 1**: Swagger UI - More for testing Logic 
 This is best for manual verification of endpoints and data schemas
 URL - [Swagger UI created documentation of my API](https://joshualim-webservicesandwebdata.onrender.com/docs)
+![The website of Swagger UI](image-15.png)
 
+If the server is currently sleeping this is what the webpage will look like. If this is the case just wait for the server to wake up and it will show the docs. 
+![Shows an image of the doc when the server has been put to sleep](image-16.png)
 **Online Method 2**: Model Context Protocol (MCP) Inspector - AI integration
 a. In your terminal run 
 
