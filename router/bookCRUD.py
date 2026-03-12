@@ -238,8 +238,8 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
 def rate_book(
     data: BookRating, 
     db: Session = Depends(get_db), 
-    token: Optional[str] = None,
-    current_user: User = Depends(lambda token=None: get_current_user(ai_token=token))
+    token: Optional[str] = None, # Added for AI visibility
+    current_user: User = Depends(get_current_user)
 ):
 
     """ 

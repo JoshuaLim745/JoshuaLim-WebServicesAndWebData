@@ -51,33 +51,31 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 async def get_current_user(
     token: Optional[str] = Depends(oauth2_scheme), 
     db: Session = Depends(get_db),
-    # Add these to catch the AI's tool arguments
-    ai_token: Optional[str] = None, 
-    mcp_token: Optional[str] = None 
+    ai_token: Optional[str] = None  # <--- Add this to capture the AI's input
 ):
-    # Check header first, then fallback to AI-provided parameters
-    # Note: We prioritize the header for standard web security
-    final_token = token or ai_token or mcp_token
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    # Logic: Use the header token if present, otherwise use the AI's parameter
+    final_token = token or ai_token 
 
     if not final_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated - No token found in headers or parameters",
-        )
-
-    # Clean the token (Claude sometimes adds "Bearer " prefix)
-    if final_token.startswith("Bearer "):
-        final_token = final_token.replace("Bearer ", "")
+        raise credentials_exception
 
     try:
+        # Decode the JWT
         payload = jwt.decode(final_token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+            raise credentials_exception
     except JWTError:
-        raise HTTPException(status_code=401, detail="Token has expired or is invalid")
+        raise credentials_exception
 
+    # Fetch user from your databaseModel.User table
     user = db.query(User).filter(User.email == email).first()
     if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise credentials_exception
     return user
