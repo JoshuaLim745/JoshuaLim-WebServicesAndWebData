@@ -15,7 +15,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # 2. OAuth2 Scheme definition
 # This tells FastAPI that the token is obtained from the "/users/login" endpoint
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/login", auto_error=False)
 
 # 3. Password Hashing Utilities (Centralized from your CRUD files)
 def hash_password(password: str) -> str:
@@ -51,7 +51,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 async def get_current_user(
     token: Optional[str] = Depends(oauth2_scheme), 
     db: Session = Depends(get_db),
-    ai_token: Optional[str] = None  # <--- Add this to capture the AI's input
+    ai_token: Optional[str] = None 
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,10 +60,14 @@ async def get_current_user(
     )
     
     # Logic: Use the header token if present, otherwise use the AI's parameter
-    final_token = token or ai_token 
+    final_token = token or ai_token
 
     if not final_token:
-        raise credentials_exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No token provided. Use the Authorize button or ai_token field.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     try:
         # Decode the JWT
