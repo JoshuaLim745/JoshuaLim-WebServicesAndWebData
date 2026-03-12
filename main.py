@@ -59,8 +59,9 @@ mcp = FastApiMCP(
         "getGenreTrends", "getBookSuggestions", "generateBookDescriptionAI"
     ]
 )
-
+mcp.add_to_app(app, base_url="/mcp")
 mcp.mount_http()
+
 PORT = int(os.environ.get("PORT", 10000))
 
 if __name__ == "__main__":
