@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
-from typing import List
+from typing import List, Optional
 from passlib.context import CryptContext
 import bcrypt
 from databaseModel import User, Genre, get_db
@@ -84,7 +84,11 @@ def create_user(user_in: UserAuth, db: Session = Depends(get_db)):
 
 
 @router.post("/read", summary="View user profile", operation_id="getUserProfile", tags=["User Management"])
-def read_user_me(current_user: User = Depends(get_current_user)):
+def read_user_me(
+    db: Session = Depends(get_db), 
+    token: Optional[str] = None,  # AI now sees this as a tool input
+    current_user: User = Depends(get_current_user)
+):
 
     """
     ### Read User Data
@@ -95,10 +99,7 @@ def read_user_me(current_user: User = Depends(get_current_user)):
     * **Output**: Returns user email and a list of their favourite genres.
     """
     
-    return {
-        "email": current_user.email,
-        "favoriteGenres": [g.name for g in current_user.fav_genres]
-    }
+    return {"email": current_user.email, "favoriteGenres": [g.name for g in current_user.fav_genres]}
 
 
 
@@ -106,7 +107,12 @@ def read_user_me(current_user: User = Depends(get_current_user)):
 
 
 @router.put("/update-genres", summary="Update-genres", operation_id="updateUser", tags=["User Management"])
-def update_genres(data: GenreUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_genres(
+    data: GenreUpdate, 
+    db: Session = Depends(get_db), 
+    token: Optional[str] = None, # Added for AI visibility
+    current_user: User = Depends(get_current_user)
+):
 
     """
     ### Update User Preferences
@@ -139,7 +145,11 @@ def update_genres(data: GenreUpdate, db: Session = Depends(get_db), current_user
 
 
 @router.delete("/delete", summary="Remove user account", operation_id="deleteUserAccount", tags=["User Management"])
-def delete_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_user(
+    db: Session = Depends(get_db), 
+    token: Optional[str] = None, # Add this for AI visibility
+    current_user: User = Depends(get_current_user)
+):
 
     """
     ### Delete User Data

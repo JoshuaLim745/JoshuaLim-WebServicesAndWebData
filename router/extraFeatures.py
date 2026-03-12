@@ -115,7 +115,11 @@ def get_trends(target: str, db: Session = Depends(get_db)):
 
 
 @router.post("/suggestions", summary="Get book recommendations", response_model=List[BookSuggestionResponse], operation_id="getBookSuggestions", tags=["Analysis & AI Tools"])
-def get_suggestions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_suggestions(
+    db: Session = Depends(get_db), 
+    token: Optional[str] = None, # Add this for AI visibility
+    current_user: User = Depends(get_current_user)
+):
     """
     ### Personalized Recommendations Engine
     Generates a curated list of books based on a user's specific reading tastes.

@@ -235,7 +235,12 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/ratings/rate", summary="Rate a book", operation_id="rateBook", tags=["Book Management"])
-def rate_book(data: BookRating, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def rate_book(
+    data: BookRating, 
+    db: Session = Depends(get_db), 
+    token: Optional[str] = None, # Added for AI visibility
+    current_user: User = Depends(get_current_user)
+):
 
     """ 
     ### Book Rating System

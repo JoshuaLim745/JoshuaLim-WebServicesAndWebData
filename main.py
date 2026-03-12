@@ -61,7 +61,7 @@ mcp = FastApiMCP(
 )
 
 mcp.mount_http()
-PORT = os.environ.get("PORT", 8000)
+PORT = int(os.environ.get("PORT", 10000))
 
 if __name__ == "__main__":
     import uvicorn

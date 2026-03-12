@@ -1,0 +1,14 @@
+fastapi[standard]
+mcp
+fastapi-mcp
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+google-genai
+kagglehub[pandas-datasets]
+
+pytest
+pytest-asyncio
+httpx
