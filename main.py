@@ -3,6 +3,8 @@ from fastapi_mcp import FastApiMCP
 from fastapi.middleware.cors import CORSMiddleware
 from router import userCRUD, bookCRUD, extraFeatures
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(title="Book Engine API")
 
