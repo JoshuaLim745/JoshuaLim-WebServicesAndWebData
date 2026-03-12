@@ -24,24 +24,24 @@ class GenreUpdate(BaseModel):
     mode: str  # "add" or "delete"
     genreName: str
 
+class LoginRequest(BaseModel):
+    emai: str
+    password: str
 
-@router.post("/login", tags=["User Management"])
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/login", operation_id="login", tags=["User Management"])
+def login(data: LoginRequest, db: Session = Depends(get_db)):
     """
     Standard OAuth2 login flow to get a JWT token.
     * **Input**:
-        * `grant_type`: Tells the server how the client is trying to authenticate. For password-based login, this should be "password".
         * `username`: User email
         * `password`: User password
-        * `scope`: Send empty value as there is no role-based access control implemented
-        * `client_id` and `client_secret`: Credentials used to authenticate the application itself
     * **Output**: Returns the user data upon success.
     * **Error**: Returns an appropriate message if the user provides incorrect credentials.
     
     
     """
-    user = db.query(User).filter_by(email=form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password):
+    user = db.query(User).filter_by(email=data.username).first()
+    if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     
     access_token = create_access_token(data={"sub": user.email})
