@@ -11,7 +11,7 @@ import os
 # 1. Configuration Constants
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # 2. OAuth2 Scheme definition
 # This tells FastAPI that the token is obtained from the "/users/login" endpoint
@@ -48,19 +48,26 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 # 5. The "get_current_user" Dependency
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    """
-    Decodes the token, validates it, and returns the User object from the DB.
-    Inject this into any route that needs authentication.
-    """
+async def get_current_user(
+    token: Optional[str] = Depends(oauth2_scheme), 
+    db: Session = Depends(get_db),
+    ai_token: Optional[str] = None  # <--- Add this to capture the AI's input
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # Logic: Use the header token if present, otherwise use the AI's parameter
+    final_token = token or ai_token 
+
+    if not final_token:
+        raise credentials_exception
+
     try:
         # Decode the JWT
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(final_token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception

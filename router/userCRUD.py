@@ -95,6 +95,7 @@ def read_user_me(
     Retrieves the profile and favorite genres for an existing user.
     
     * **Input**:
+        * `Token`: Used to identify the user making the request (Optional. As this is for Claude Desktop).
     * **Security**: Uses the token to identify and return the user profile.
     * **Output**: Returns user email and a list of their favourite genres.
     """
@@ -119,6 +120,7 @@ def update_genres(
     Allows a user to manage their favorite genre list.
     
     * **Input**:
+        * `Token`: Used to identify the user making the request (Optional. As this is for Claude Desktop).
         * `Mode`: Use **'add'** to add a genre to a user's favorite genre list or **'delete'** to remove it from the list.
         * `Genre name`: The name of the genre (e.g., 'Fantasy').
     * **Logic**: Modifies the `user_genre_link` association table.
@@ -156,6 +158,7 @@ def delete_user(
     Permanently removes a user and their associations from the database.
     
     * **Input**: No input parameters are required as the user is identified through the token.
+        * `Token`: Used to identify the user making the request (Optional and can be left blank. As this is for Claude Desktop).
     * **Logic**: Removes the record from the `users` table. Cascade settings handle the link table.
     * **Output**: Confirmation message of removal.
     """

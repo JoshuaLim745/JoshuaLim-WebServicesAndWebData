@@ -125,6 +125,7 @@ def get_suggestions(
     Generates a curated list of books based on a user's specific reading tastes.
 
     * **Input**:
+        * `Token`: Used to identify the user making the request (Optional and can be left blank. As this is for Claude Desktop).
         * `Email`: User email
         * `Password`: User password
     * **Output**: A list of up to 3 with their bookID, title, author, and all their respective genre.

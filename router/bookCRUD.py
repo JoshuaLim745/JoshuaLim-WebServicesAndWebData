@@ -247,6 +247,7 @@ def rate_book(
     Allows an authenticated user to assign a star rating to a specific book. This endpoint uses **Upsert** logic, meaning it handles both new ratings and updates to existing ones.
     
     * **Input**:
+        * `Token`: Used to identify the user making the request (Optional and can be left blank. As this is for Claude Desktop).
         * `Book ID`: The integer ID of the book in the database.
         * `Rating`: The score that a user wants to provide a book with
     * **Output**: A list of up to 3 book objects.
