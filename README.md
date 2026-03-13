@@ -44,12 +44,8 @@ Defines the SQLAlchemy ORM schema, establishing the structure for Users, Books, 
 ### auth\.py
 Centralizes security logic by handling JWT (JSON Web Token) creation, password hashing with bcrypt, and token validation. It provides the get_current_user dependency used throughout the API to protect private routes and identify authenticated users.
 
-
-
 ### BookAPIDocumentation\.pdf
 Contains the written documentation of my API. [API Documentation](./BookAPIDocumentation.pdf)
-
-### Presentation Slides
 
 ### Genre.txt
 List of genres. Please reference this file when dealling with genre Ids
@@ -122,6 +118,9 @@ There are cases when Claude asks for permission to use an API endpoints like:
 This is best for manual verification of endpoints and data schemas
 URL - [Swagger UI created documentation of my API](https://joshualim-webservicesandwebdata.onrender.com/docs)
 ![The website of Swagger UI](Images/image-15.png)
+
+1. Please login at `/users/login` and enter in your username and password
+2. Click on the authorize button and fill in your username and password. The other can just be left blank. 
 
 If the server is currently sleeping this is what the webpage will look like. If this is the case just wait for the server to wake up and it will show the docs. 
 ![Shows an image of the doc when the server has been put to sleep](Images/image-16.png)
