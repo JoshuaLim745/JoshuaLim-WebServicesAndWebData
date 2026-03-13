@@ -114,6 +114,12 @@ There are cases when Claude asks for permission to use an API endpoints like:
 
 ### To interact with the API, you can utilize two online interfaces for testing:
 
+If you need to use a test account then:
+
+Username = test@test.com
+Password = test
+
+
 **Online Method 1**: Swagger UI - More for testing Logic 
 This is best for manual verification of endpoints and data schemas
 URL - [Swagger UI created documentation of my API](https://joshualim-webservicesandwebdata.onrender.com/docs)
