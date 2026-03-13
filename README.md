@@ -98,17 +98,13 @@ Steps:
 ![alt text](Images/image-21.png)
 12. Now we can use Claude dekstop to query / use the API endpoints. [Like in this chat](https://claude.ai/share/a4d39020-02a2-4148-ad81-3e8afd118740)
 
+There are cases when Claude asks for permission to use an API endpoints like:
+![alt text](Images/image-23.png) Just click `always allow` or click the down arrow for a drop down to allow only for that query. 
 
 
 
 
-To interact with your API, run the server locally using the command line or you can utilize two online interfaces for testing:
-
-**Local Method**:Local Development Server
-To install all the libraries used please enter `uv sync` into your terminal.
-If issues arise and you are unable to use uv you can try `pip install -r requirements.txt` .
-
-You can run the API on your own machine for testing and debugging by executing the command: `fastapi dev main.py`
+### To interact with your API, you can utilize two online interfaces for testing:
 
 **Online Method 1**: Swagger UI - More for testing Logic 
 This is best for manual verification of endpoints and data schemas
