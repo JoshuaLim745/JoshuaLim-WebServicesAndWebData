@@ -125,60 +125,64 @@ def get_suggestions(
 
     * **Input**:
         * `Token`: Used to identify the user making the request (Optional and can be left blank. As this is for Claude Desktop).
-        * `Email`: User email
-        * `Password`: User password
     * **Output**: A list of up to 3 with their bookID, title, author, and all their respective genre.
     * **Empty State**: Returns an empty list `[]` if the user's top genre is fully explored.
     * **Error State**: Returns a `404` if the user has no rating history.
     """
-    # 1. Get genre IDs from current_user's favorites
+    # 1. Get genre IDs from current_user's explicit favorites
     fav_genre_ids = [g.id for g in current_user.fav_genres]
 
     # 2. Get genre IDs from current_user's high ratings (4+ stars)
+    # We join UserRatesBook to the link table to see what genres they've liked in practice
     rated_genre_ids = db.scalars(
         select(book_genre_link.c.genre_id)
         .join(UserRatesBook, UserRatesBook.book_id == book_genre_link.c.book_id)
         .filter(UserRatesBook.user_id == current_user.id, UserRatesBook.user_rating >= 4.0)
     ).all()
 
+    # Combine both lists and remove duplicates
     all_target_genre_ids = list(set(fav_genre_ids) | set(rated_genre_ids))
 
     if not all_target_genre_ids:
-        raise HTTPException(status_code=404, detail="No favorites or high ratings found to generate suggestions.")
+        raise HTTPException(
+            status_code=404, 
+            detail="Add some favorite genres or rate books to get suggestions!"
+        )
 
-    # 3. Find books that have ANY of these genres and haven't been rated yet
-    rated_books = select(UserRatesBook.book_id).where(UserRatesBook.user_id == current_user.id)
+    # 3. Identify books the user has already rated to exclude them
+    rated_books_query = select(UserRatesBook.book_id).where(UserRatesBook.user_id == current_user.id)
     
-    subquery = (
+    # 4. The "Strict" Suggestion Query
+    # This ranks books by how many "target" genres they have in common with the user
+    suggestions_query = (
         select(Book)
+        # Use selectinload to ensure 'genres' are fetched for the response
+        .options(selectinload(Book.genres))
         .join(book_genre_link)
         .filter(
             book_genre_link.c.genre_id.in_(all_target_genre_ids),
-            ~Book.id.in_(rated_books)
+            ~Book.id.in_(rated_books_query)
         )
-        .distinct()
-        .subquery()
-    )
-
-    # This outer query takes that unique set and randomizes it
-    # We alias the subquery back to the Book model so SQLAlchemy knows how to load it
-    suggestions_query = (
-        select(Book)
-        .select_from(subquery)
-        .order_by(func.random())
-        .limit(3)
+        .group_by(Book.id)
+        # Sort by Match Count (most relevant first), then randomize ties
+        .order_by(
+            desc(func.count(book_genre_link.c.genre_id)), 
+            func.random()
+        )
+        .limit(7)
     )
 
     suggestions = db.scalars(suggestions_query).all()
 
-    # 4. Map to Response
+    # 5. Map to Response
     return [
         {
             "id": b.id,
             "title": b.title,
             "author": b.author,
             "avgRating": b.avg_rating,
-            "genres": [g.name for g in b.genres]
+            # This will now be populated thanks to selectinload
+            "genres": [g.name for g in b.genres] 
         } for b in suggestions
     ]
 
