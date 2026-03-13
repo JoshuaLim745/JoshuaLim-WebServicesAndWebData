@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, select
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 from databaseModel import Book, Genre, User, UserRatesBook, book_genre_link, user_genre_link, get_db
-from passlib.context import CryptContext
-import bcrypt
 from auth import get_current_user
 
 router = APIRouter(prefix="/books")
@@ -27,35 +26,6 @@ class BookRating(BaseModel):
     rating: float = Field(..., ge=1.0, le=5.0)
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str) -> str:
-    # 1. Encode string to bytes
-    # 2. Truncate to 72 bytes (bcrypt limit)
-    pwd_bytes = password.encode('utf-8')[:72]
-    
-    # 3. Generate salt and hash
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(pwd_bytes, salt)
-    
-    # 4. Return as a string so it can be stored in PostgreSQL
-    return hashed.decode('utf-8')
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        # 1. Prepare inputs (truncate plain text to match)
-        pwd_bytes = plain_password.encode('utf-8')[:72]
-        hash_bytes = hashed_password.encode('utf-8')
-        
-        # 2. Check compatibility
-        return bcrypt.checkpw(pwd_bytes, hash_bytes)
-    except Exception:
-        return False
-
-
-
-
-
 
 
 
@@ -71,36 +41,59 @@ def create_book(book_in: BookCreate, db: Session = Depends(get_db)):
         * `Title`: String name of the book.
         * `Author`: String name of the author.
         * `Avg rating`: Initial numeric rating.
-        * `Genre ids`: A list of existing Genre IDs to link to this book.
+        * `Genre ids`: A list of existing Genre IDs to link to this book. The list can be found in genre.txt in the github page
     * **Logic**: 
         * Initializes the `Book` object.
         * Uses a SQL `IN` clause to fetch and link multiple genres simultaneously.
     * **Output**: Returns the full book object including the names of the associated genres.
     """
+    try:
+        # 1. Initialize book object using the attribute name, not the alias
+        new_book = Book(
+            title=book_in.title,
+            author=book_in.author,
+            avg_rating=book_in.avg_rating 
+        )
+        
+        # 2. Link Genres (Many-to-Many)
+        if book_in.genre_ids:
+            genres = db.scalars(
+                select(Genre).where(Genre.id.in_(book_in.genre_ids))
+            ).all()
+            
+            if not genres and book_in.genre_ids:
+                raise HTTPException(status_code=400, detail="Provided Genre IDs were not found.")
+            
+            new_book.genres = list(genres)
 
-    # 1. Initialize book object
-    new_book = Book(
-        title=book_in.title,
-        author=book_in.author,
-        avg_rating=book_in.avg_rating
-    )
-    
-    # 2. Link Genres (Many-to-Many)
-    if book_in.genre_ids:
-        genres = db.scalars(select(Genre).where(Genre.id.in_(book_in.genre_ids))).all()
-        new_book.genres = list(genres)
+        db.add(new_book)
+        db.commit()
+        
+        # 3. CRITICAL FIX: Re-query the book with genres pre-loaded
+        # This prevents the 500 error during the 'return' dictionary construction
+        stmt = (
+            select(Book)
+            .options(selectinload(Book.genres))
+            .where(Book.id == new_book.id)
+        )
+        final_book = db.scalar(stmt)
 
-    db.add(new_book)
-    db.commit()
-    db.refresh(new_book)
-    
-    return {
-        "id": new_book.id,
-        "title": new_book.title,
-        "author": new_book.author,
-        "avgRating": new_book.avg_rating,
-        "genres": [g.name for g in new_book.genres]
-    }
+        return {
+            "id": final_book.id,
+            "title": final_book.title,
+            "author": final_book.author,
+            "avgRating": final_book.avg_rating,
+            "genres": [g.name for g in final_book.genres]
+        }
+
+    except IntegrityError as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Database integrity error. Check if data is valid.")
+    except Exception as e:
+        db.rollback()
+        # Log this to your Render console to see the exact line failure
+        print(f"Creation Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
@@ -121,7 +114,7 @@ def read_book(book_id: int, db: Session = Depends(get_db)):
     * **Logic**: Performs a database lookup. If the ID does not exist, it triggers a `404` error.
     * **Output**: Returns the title, author, rating, and all linked genres.
     """
-    book = db.get(Book, book_id)
+    book = db.scalars(select(Book).options(selectinload(Book.genres)).where(Book.id == book_id)).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     
@@ -157,7 +150,7 @@ def update_book_partial(book_id: int, field_name: str, new_value: str, db: Sessi
     * **Output**: Success message confirming which field was changed.
     """
 
-    book = db.get(Book, book_id)
+    book = db.scalars(select(Book).options(selectinload(Book.genres)).where(Book.id == book_id)).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
@@ -219,7 +212,7 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
     * **Error**: Returns `404 Not Found` if the book ID is invalid.
     * **Output**: A confirmation string verifying deletion.
     """
-    book = db.get(Book, book_id)
+    book = db.scalars(select(Book).options(selectinload(Book.genres)).where(Book.id == book_id)).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     
@@ -258,7 +251,7 @@ def rate_book(
     if not (1.0 <= data.rating <= 5.0):
         raise HTTPException(status_code=400, detail="Rating must be 1.0-5.0")
 
-    book = db.get(Book, data.bookId)
+    book = db.scalars(select(Book).options(selectinload(Book.genres)).where(Book.id == data.bookId)).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
@@ -269,5 +262,8 @@ def rate_book(
     else:
         db.add(UserRatesBook(user_id=current_user.id, book_id=data.bookId, user_rating=data.rating))
     
+    db.flush() # Ensure the new rating is in the session
+    new_avg = db.query(func.avg(UserRatesBook.user_rating)).filter(UserRatesBook.book_id == data.bookId).scalar()
+    book.avg_rating = round(new_avg, 2)
     db.commit()
     return {"message": "Rating updated"}

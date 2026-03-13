@@ -82,5 +82,5 @@ class Book(Base):
 class UserRatesBook(Base):
     __tablename__ = "user_rates_books"
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    book_id: Mapped[int] = mapped_column(ForeignKey("books.id"), primary_key=True)
+    book_id: Mapped[int] = mapped_column(ForeignKey("books.id", ondelete="CASCADE"), primary_key=True)
     user_rating: Mapped[float] = mapped_column(Float)

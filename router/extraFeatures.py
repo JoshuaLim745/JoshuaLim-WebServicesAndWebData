@@ -153,23 +153,24 @@ def get_suggestions(
     rated_books_query = select(UserRatesBook.book_id).where(UserRatesBook.user_id == current_user.id)
     
     # 4. The "Strict" Suggestion Query
-    # This ranks books by how many "target" genres they have in common with the user
     suggestions_query = (
         select(Book)
-        # Use selectinload to ensure 'genres' are fetched for the response
+        # Fix for the "—" UI issue: Eagerly load genre objects
         .options(selectinload(Book.genres))
         .join(book_genre_link)
         .filter(
             book_genre_link.c.genre_id.in_(all_target_genre_ids),
             ~Book.id.in_(rated_books_query)
         )
+        # Grouping by Book ID allows us to count the matching genres
         .group_by(Book.id)
-        # Sort by Match Count (most relevant first), then randomize ties
+        # Strict logic: Sort by the number of genre matches (highest first)
+        # Then use func.random() to provide variety within the top matches
         .order_by(
             desc(func.count(book_genre_link.c.genre_id)), 
             func.random()
         )
-        .limit(7)
+        .limit(3) # Or 7, depending on your UI preference
     )
 
     suggestions = db.scalars(suggestions_query).all()
