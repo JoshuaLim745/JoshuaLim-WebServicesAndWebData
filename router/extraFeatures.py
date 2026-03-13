@@ -214,7 +214,12 @@ def get_book_description_ai(book_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Book not found in database")
 
     # 2. Generate the description using Gemini
-    ai_text = generate_ai_description(book.title, book.author)
+    try:
+        # This is where the mock raises the exception
+        ai_text = generate_ai_description(book.title, book.author)
+    except Exception as e:
+        # This catches the "API Down" exception and returns a 502 status code
+        raise HTTPException(status_code=502, detail=f"Gemini API Error: {str(e)}")
 
     # 3. Return the response in camelCase
     return {

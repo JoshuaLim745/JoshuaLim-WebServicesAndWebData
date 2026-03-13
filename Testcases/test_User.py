@@ -1,12 +1,11 @@
 def test_user_lifecycle(client):
-    # 1. Create User (Still uses JSON)
-    reg_response = client.post("/users/create", json={"email": "test@example.com", "password": "password123"})
-    assert reg_response.status_code == 200
+    # 1. Create User
+    client.post("/users/create", json={"email": "test@example.com", "password": "password123"})
 
-    # 2. Login (NOW uses Form Data 'username' and 'password')
+    # 2. Login (Fix: Use 'json' and 'email' key)
     login_response = client.post(
         "/users/login", 
-        data={"username": "test@example.com", "password": "password123"}
+        json={"email": "test@example.com", "password": "password123"}
     )
     assert login_response.status_code == 200
     token = login_response.json()["access_token"]

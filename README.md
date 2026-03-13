@@ -116,7 +116,7 @@ There are cases when Claude asks for permission to use an API endpoints like:
 
 
 
-### To interact with your API, you can utilize two online interfaces for testing:
+### To interact with the API, you can utilize two online interfaces for testing:
 
 **Online Method 1**: Swagger UI - More for testing Logic 
 This is best for manual verification of endpoints and data schemas
@@ -210,3 +210,5 @@ This means that your access_token has expired and you need to get a new one. Loo
 ---
 
 # Extra information
+
+If you are interested in running the testcases when run `python -m pytest -s `in the terminal / console.

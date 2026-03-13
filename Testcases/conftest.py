@@ -4,6 +4,14 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from unittest.mock import patch
+from dotenv import load_dotenv
+
+# Get the path to the directory above 'Testcases' (the root)
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+dotenv_path = os.path.join(base_dir, ".env")
+
+# Load the .env file from the root
+load_dotenv(dotenv_path)
 
 # 1. FIX PATHS
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
