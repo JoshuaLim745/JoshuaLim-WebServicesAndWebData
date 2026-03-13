@@ -4,8 +4,6 @@ from sqlalchemy import func, select, desc
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 from databaseModel import Book, Genre, User, UserRatesBook, book_genre_link, user_genre_link, get_db
-from passlib.context import CryptContext
-import bcrypt
 from google import genai
 from auth import get_current_user
 import os
@@ -21,30 +19,6 @@ class BookSuggestionResponse(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def hash_password(password: str) -> str:
-    # 1. Encode string to bytes
-    # 2. Truncate to 72 bytes (bcrypt limit)
-    pwd_bytes = password.encode('utf-8')[:72]
-    
-    # 3. Generate salt and hash
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(pwd_bytes, salt)
-    
-    # 4. Return as a string so it can be stored in PostgreSQL
-    return hashed.decode('utf-8')
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        # 1. Prepare inputs (truncate plain text to match)
-        pwd_bytes = plain_password.encode('utf-8')[:72]
-        hash_bytes = hashed_password.encode('utf-8')
-        
-        # 2. Check compatibility
-        return bcrypt.checkpw(pwd_bytes, hash_bytes)
-    except Exception:
-        return False
 
 router = APIRouter(prefix="/Extra-Features")
 
@@ -229,7 +203,7 @@ def get_book_description_ai(book_id: int, db: Session = Depends(get_db)):
     """
     ### AI Book Description Generator
     Uses the **Gemini 3 Flash** model to generate a custom description based on the book's title.
-
+    
     * **Step 1**: Looks up the `book_id` in the database to retrieve the `title` and `author`.
     * **Step 2**: Passes that data to the Gemini API.
     * **Step 3**: Returns the natively generated text.

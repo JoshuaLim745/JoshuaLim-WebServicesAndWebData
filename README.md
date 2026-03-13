@@ -46,13 +46,25 @@ Centralizes security logic by handling JWT (JSON Web Token) creation, password h
 
 
 
+### BookAPIDocumentation\.pdf
+Contains the written documentation of my API. [API Documentation](./BookAPIDocumentation.pdf)
+
+### Presentation Slides
+
+### Genre.txt
+List of genres. Please reference this file when dealling with genre Ids
+
+### filtered_google_books.csv
+List of all books in csv format. 
+
+
+
+
 Other Files
-1. Genre.txt - List of genres
-2. filtered_google_books.csv - List of all books in csv format. 
-3. Migrations folder - Version control of DB model
-4. Images folder - Holds all the images used for this README\.md
-5. pyproject.toml - The configuration file for the project that specifies metadata like Python version requirements and defines all high-level dependencies, such as FastAPI, SQLAlchemy, and the Google GenAI library.
-6. uv.lock - A machine-generated lockfile that ensures reproducible builds by pinning the exact versions and hashes of every package and sub-dependency used in the environment.
+1. Migrations folder - Version control of DB model
+2. Images folder - Holds all the images used for this README\.md
+3. pyproject.toml - The configuration file for the project that specifies metadata like Python version requirements and defines all high-level dependencies, such as FastAPI, SQLAlchemy, and the Google GenAI library.
+4. uv.lock - A machine-generated lockfile that ensures reproducible builds by pinning the exact versions and hashes of every package and sub-dependency used in the environment.
 
 ---
 
@@ -96,7 +108,7 @@ Steps:
 ![Shows Claude connection to API](Images/image-20.png)
 11. Back to the main page, we need to check the connectors. Clicking on the plus icon and hovering over connectors will show that book-engine has been connected. 
 ![alt text](Images/image-21.png)
-12. Now we can use Claude dekstop to query / use the API endpoints. [Like in this chat](https://claude.ai/share/a4d39020-02a2-4148-ad81-3e8afd118740)
+12. Now we can use Claude dekstop to query / use the API endpoints. [Like in this chat](https://claude.ai/share/a4c12e6b-e263-4c29-9b5f-c3bdc44869dd)
 
 There are cases when Claude asks for permission to use an API endpoints like:
 ![alt text](Images/image-23.png) Just click `always allow` or click the down arrow for a drop down to allow only for that query. 
@@ -154,7 +166,7 @@ $body = @{
 Invoke-RestMethod -Uri "[https://joshualim-webservicesandwebdata.onrender.com/users/login](https://joshualim-webservicesandwebdata.onrender.com/users/login)" -Method Post -Body $body
 ```
 
-**NOTE** - The access_token only lasts for 30 mins so  another token has to be obtained after this time period.
+**NOTE** - The access_token only lasts for 60 mins so another token has to be obtained after this time period.
 
 d. After obtaining the access_token we can go back to the MCP Inspector and place it in to the second box. In the format of `bearer YOUR_AUTH_TOKEN_HERE`. 
 
