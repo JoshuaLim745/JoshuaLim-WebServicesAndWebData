@@ -69,10 +69,34 @@ As noted from Render website:
 # 3. Setup Instruction
 API AI integration with Claude Desktop
 Steps:
-1. Download [Claude Desktop]()
+1. Download [Claude Desktop](https://claude.com/download)
+2. Open the app
+3. Sign in to an account or if you don't have an account then create one and login. 
+4. In the main page and on the bottom left, there is a profile icon click on it and we will see the settings button. 
+![After clicking on the profile icon](Images/image-17.png) 
+5. Then click on the settings and go to the developer section and click on the `Edit Config` Button.
+![Image of edit config button](Images/image-18.png)
+6. This opens up your file explorer that highlights a file called `claude_desktop_config` it is a .json file. Open the file in your prefered IDE.
+7. Then attach this line of code to the .json file. 
+```"mcpServers": {
+    "book-engine": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://joshualim-webservicesandwebdata.onrender.com/mcp"
+      ]
+    }
+  }
+```
 
-
-
+8. Once that is done your config file should look like this. 
+![After adding the Mcp Connection](Images/image-19.png)
+9. Now force close the Claude dekstop with task manager.
+10. Open up Claude dekstop, go to the settings and select the developer section. Now we can see that Claude has connected to the API.
+![Shows Claude connection to API](Images/image-20.png)
+11. Back to the main page, we need to check the connectors. Clicking on the plus icon and hovering over connectors will show that book-engine has been connected. 
+![alt text](Images/image-21.png)
+12. Now we can use Claude dekstop to query / use the API endpoints. [Like in this chat](https://claude.ai/share/a4d39020-02a2-4148-ad81-3e8afd118740)
 
 
 
@@ -89,10 +113,10 @@ You can run the API on your own machine for testing and debugging by executing t
 **Online Method 1**: Swagger UI - More for testing Logic 
 This is best for manual verification of endpoints and data schemas
 URL - [Swagger UI created documentation of my API](https://joshualim-webservicesandwebdata.onrender.com/docs)
-![The website of Swagger UI](image-15.png)
+![The website of Swagger UI](Images/image-15.png)
 
 If the server is currently sleeping this is what the webpage will look like. If this is the case just wait for the server to wake up and it will show the docs. 
-![Shows an image of the doc when the server has been put to sleep](image-16.png)
+![Shows an image of the doc when the server has been put to sleep](Images/image-16.png)
 **Online Method 2**: Model Context Protocol (MCP) Inspector - AI integration
 a. In your terminal run 
 
